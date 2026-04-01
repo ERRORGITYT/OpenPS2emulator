@@ -12,8 +12,9 @@ A public, work-in-progress emulator project focused on learning low-level hardwa
 
 ## 🛠️ Tech Stack & Skills
 
-### Core Languages
+### Core Languages & Libraries
 ![C++](https://img.shields.io/badge/C++-00599C?style=for-the-badge&logo=c%2B%2B&logoColor=white)
+![SDL2](https://img.shields.io/badge/SDL2-Library-0095D5?style=for-the-badge&logo=sdl&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
 
@@ -30,7 +31,8 @@ A public, work-in-progress emulator project focused on learning low-level hardwa
 ![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 
 * **Architecture:** ARM64 (Primary Target), x86_64
-* **GPU Target:** Mali-G52 / Adreno (OpenGL ES 3.0+ / Vulkan)
+* **Graphics API:** OpenGL ES 3.0+ / SDL2 Renderer
+* **Hardware Target:** Mali-G52 (Helio G85)
 
 ---
 
@@ -40,8 +42,8 @@ The ultimate goal is to build a functional PlayStation 2 emulator. Currently, I 
 ### Current Milestone: [Phase 1] CHIP-8
 * CPU Instruction Sets (Opcodes)
 * Memory Mapping & Registers
+* **SDL2 Graphics & Input Handling**
 * Fetch-Decode-Execute Cycles
-* Graphics Rendering
 
 ## 📝 Status: Pre-Alpha
 This project is a **Learning Journey**. I am building this code manually to ensure a deep understanding of how emulation works.
