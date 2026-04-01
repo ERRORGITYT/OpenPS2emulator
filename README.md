@@ -5,7 +5,7 @@ A public, work-in-progress emulator project focused on learning low-level hardwa
 ---
 
 ## 🔗 Connect with Me
-[![YouTube Channel](https://img.shields.io/badge/YouTube-@ERRORwhately--red?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/@ERRORwhately)
+[![YouTube Channel](https://img.shields.io/badge/YouTube-@ERRORwhately-red?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/channel/UCYDka200SN-zYT4mOqAMZKQ)
 [![GitHub followers](https://img.shields.io/github/followers/ERRORGITYT?style=for-the-badge&logo=github&color=333)](https://github.com/ERRORGITYT)
 
 ---
