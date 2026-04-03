@@ -26,7 +26,19 @@ int main(int argc, char* argv[]) {
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         SCREEN_WIDTH, SCREEN_HEIGHT,
         SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI
-    );
+    // Inside your main function in main.cpp
+SDL_Window* window = initialize_sdl(); // The function from your screenshot
+
+bool running = true;
+SDL_Event event;
+
+while (running) {
+    while (SDL_PollEvent(&event)) {
+        if (event.type == SDL_QUIT) running = false;
+    }
+    
+    // Rendering calls go here
+}
 
     if (!window) {
         std::cerr << "Window creation failed!" << std::endl;
