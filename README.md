@@ -1,7 +1,8 @@
 # OpenPS2emulator 🎮
 
 A public, work-in-progress emulator project focused on learning low-level hardware architecture and software development.
-(https://github.com/ERRORGITYT/OpenPS2emulator/blob/main/logo.png)
+
+# ![logo](https://github.com/ERRORGITYT/OpenPS2emulator/blob/main/logo.png)
 
 ---
 
