@@ -50,6 +50,10 @@ The ultimate goal is to build a functional PlayStation 2 emulator. Currently, I 
 ## 📝 Status: Pre-Alpha
 This project is a **Learning Journey**. I am building this code manually to ensure a deep understanding of how emulation works.
 
+## NOT RELATED
+THIS IS NOT RELATED TO OPENPS2LOADER OR ANYTHING WHATSOEVER I'M JUST THE ONLY ONE
+
+
 > **Note:** This project strictly avoids AI-generated code to maintain high-quality, hand-written logic. Full credits can be found in [CREDITS.md](./CREDITS.md).
 
 ---
