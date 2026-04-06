@@ -2,20 +2,20 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+We provide security updates for the following versions of openPS2emulator:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| Latest  | :white_check_mark: |
+| Legacy  | :x:                |
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
+If you discover a security vulnerability, please do not disclose it publicly via the issue tracker. Instead, follow these steps:
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+1. **Notification:** Send a detailed report to the project maintainers.
+2. **Details:** Include the nature of the vulnerability, a proof-of-concept (if applicable), and the specific platform where it was discovered.
+3. **Fix:** We aim to acknowledge your report within 3 days and provide a timeline for a resolution.
+
+## Disclosure
+To protect the community, we ask that you keep the vulnerability confidential until a patch has been officially released.
