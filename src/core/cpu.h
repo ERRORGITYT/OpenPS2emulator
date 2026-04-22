@@ -1,55 +1,49 @@
 #ifndef CPU_H
 #define CPU_H
 
-#include <cstdint>
-#include <vector>
-#include "memory.h" // We need access to the memory we just made!
+// --- ENGINE INCLUDES ---
+#include "memory.h"
+#include <random>       // For Opcode Cxkk (RND Vx, byte)
+#include <chrono>       // High-precision timing for 60Hz timers
+#include <functional>   // Function pointers and lambda handling
+#include <stack>        // Alternative stack implementation
+#include <map>          // For mapping opcodes to debug strings
+#include <thread>       // For cycle-speed management
+#include <atomic>       // Thread-safe flags for the CPU state
 
 namespace core {
 
 class CPU {
+public:
+    explicit CPU(Memory& mem);
+    ~CPU() = default;
+
+    void reset();
+    void cycle();
+    void updateTimers();
+
 private:
-    // --- CHIP-8 Registers ---
-    
-    // 16 General Purpose 8-bit registers (V0 to VF)
-    uint8_t V[16];
+    Memory& memory;
 
-    // Index register (16-bit, but only 12 bits are usually used for addresses)
-    uint16_t I;
-
-    // Program Counter (points to the current instruction in memory)
-    uint16_t PC;
-
-    // --- The Stack ---
-    
-    // The stack is used to remember where to return after a subroutine (function call)
-    uint16_t stack[16];
-    uint8_t  stackPointer;
-
-    // --- Timers ---
-    
-    // Both count down at 60Hz and stop at 0
+    // Registers
+    uint8_t V[16];      // V0 through VF
+    uint16_t I;         // Index register
+    uint16_t PC;        // Program Counter
     uint8_t delayTimer;
     uint8_t soundTimer;
 
-    // A reference to our Memory object so the CPU can read/write
-    Memory& memory;
+    // Hardware Stack
+    uint16_t stack[16];
+    uint8_t stackPointer;
 
-public:
-    // The CPU needs a reference to Memory to function
-    CPU(Memory& mem);
-    ~CPU() = default;
+    // Random Number Engine
+    std::mt19937 rng;
+    std::uniform_int_distribution<uint8_t> dist;
 
-    // Resets registers and sets PC to 0x200 (where the game starts)
-    void reset();
-
-    // The core cycle: Fetch -> Decode -> Execute
-    void cycle();
-
-    // Updates the 60Hz timers (called from main loop)
-    void updateTimers();
+    // Internal execution methods
+    void executeOpcode(uint16_t opcode);
 };
 
 } // namespace core
 
-#endif // CPU_H
+#endif
