@@ -70,6 +70,7 @@ int main(int argc, char* argv[]) {
 
             // Sync graphics
             display.render(cpu.getDisplayBuffer(), 64, 32);
+to:
             display.present();
             
             lastCycleTime = currentTime;
