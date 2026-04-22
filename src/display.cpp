@@ -1,26 +1,60 @@
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h> // Needed for the GL attributes in your screenshot
-#include <iostream>          // For error logging (std::cerr)
-//Initializes SDL and returns a window handle.
-SDL_Window* initialize_sdl()
-{
-  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_AUDIO) != 0) 
-  {
-    return NULL;
-  }
+#include "display.h"
+#include <iostream>
+#include <vector>
 
-  // Setup window
-  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
-  SDL_DisplayMode current;
-  SDL_GetCurrentDisplayMode(0, &current);
+// CHIP-8 constants
+constexpr int SCREEN_WIDTH = 64;
+constexpr int SCREEN_HEIGHT = 32;
+constexpr int SCALE = 15; // Scale it up so it's visible on Android
 
-  SDL_Window* window = SDL_CreateWindow(
-      "Chimp Chip-8 Emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-      SCREEN_WIDTH, SCREEN_HEIGHT, SDL_RENDERER_ACCELERATED);
+// If your display class is inside the core namespace
+namespace core {
 
-  return window;
+Display::Display() : window(nullptr), renderer(nullptr) {}
+
+Display::~Display() {
+    if (renderer) SDL_DestroyRenderer(renderer);
+    if (window) SDL_DestroyWindow(window);
+    SDL_Quit();
 }
+
+bool Display::init() {
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
+        return false;
+    }
+
+    window = SDL_CreateWindow(
+        "OpenPS2emulator - CHIP-8 Core",
+        SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED,
+        SCREEN_WIDTH * SCALE,
+        SCREEN_HEIGHT * SCALE,
+        SDL_WINDOW_SHOWN
+    );
+
+    if (!window) {
+        std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+        return false;
+    }
+
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (!renderer) {
+        std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+void Display::clear() {
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Black
+    SDL_RenderClear(renderer);
+}
+
+void Display::present() {
+    SDL_RenderPresent(renderer);
+}
+
+} // namespace core
+ 
