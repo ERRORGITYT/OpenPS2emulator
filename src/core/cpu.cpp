@@ -1,94 +1,99 @@
-#include <cstdint>
+#include "cpu.h"
 #include <iostream>
-#include <array>
 #include <iomanip>
 
-// ... [rest of constants and CPU struct, unchanged] ...
+namespace core {
 
-// Logging macro for debugging
-#define LOG_OPCODE(cpu, opcode) \
-    std::cout << "PC: 0x" << std::hex << cpu.PC-2 << ", OP: 0x" << std::setw(4) << std::setfill('0') << opcode << std::dec << "\n"
+// Constants and Macros
+constexpr uint16_t MASK_NNN = 0x0FFF;
+constexpr uint16_t MASK_X   = 0x0F00;
+constexpr uint16_t MASK_Y   = 0x00F0;
+constexpr uint16_t MASK_N   = 0x000F;
+constexpr uint16_t MASK_KK  = 0x00FF;
+constexpr size_t MEMORY_SIZE = 4096;
+constexpr size_t STACK_DEPTH = 16;
 
-// Fetches a 16-bit opcode, safely
-uint16_t fetch_opcode(CPU& cpu) {
-    if (cpu.PC + 1 >= MEMORY_SIZE) {
-        std::cerr << "PC out of bounds: 0x" << std::hex << cpu.PC << std::dec << "\n";
-        return 0;
+CPU::CPU(Memory& mem) : memory(mem) {
+    reset();
+}
+
+void CPU::reset() {
+    // Standard CHIP-8 start address
+    PC = 0x200;
+    I = 0;
+    stackPointer = 0;
+    delayTimer = 0;
+    soundTimer = 0;
+    
+    // Clear registers and stack
+    for(int i = 0; i < 16; ++i) {
+        V[i] = 0;
+        stack[i] = 0;
     }
-    uint16_t opcode = (cpu.memory[cpu.PC] << 8) | cpu.memory[cpu.PC + 1];
-    cpu.PC += 2;
-    return opcode;
+    std::cout << "CPU Reset Successful. PC set to 0x200" << std::endl;
 }
 
-// Decodes given opcode into components
-void decode_opcode(uint16_t opcode, uint16_t& nnn, uint8_t& x, 
-                   uint8_t& y, uint8_t& kk, uint8_t& n) {
-    nnn = MASK_NNN(opcode);
-    x = MASK_X(opcode);
-    y = MASK_Y(opcode);
-    kk = MASK_KK(opcode);
-    n = MASK_N(opcode);
-}
+void CPU::cycle() {
+    // 1. Fetch
+    // We use the memory object to read the 16-bit opcode
+    uint16_t opcode = memory.readOpcode(PC);
+    
+    // Log the opcode for debugging (optional)
+    // std::cout << "Executing Opcode: 0x" << std::hex << opcode << std::dec << std::endl;
 
-// Implements a partial CHIP-8 instruction set, extend as needed
-void execute_cycle(CPU& cpu) {
-    uint16_t opcode = fetch_opcode(cpu);
+    // 2. Decode & Execute
+    // We move the PC first so it points to the next instruction
+    PC += 2;
 
-    // Optionally add debug log
-    LOG_OPCODE(cpu, opcode);
+    uint16_t nnn = opcode & MASK_NNN;
+    uint8_t  x   = (opcode & MASK_X) >> 8;
+    uint8_t  y   = (opcode & MASK_Y) >> 4;
+    uint8_t  kk  = opcode & MASK_KK;
+    uint8_t  n   = opcode & MASK_N;
 
-    uint16_t nnn;
-    uint8_t x, y, kk, n;
-    decode_opcode(opcode, nnn, x, y, kk, n);
-
+    // The "Big Switch" based on the first hex digit
     switch (opcode & 0xF000) {
         case 0x0000:
             if (opcode == 0x00E0) {
-                // CLS: clear the display
-                // TODO: Implement screen clear
+                // CLS: Clear screen (link to display.cpp later)
             } else if (opcode == 0x00EE) {
-                // RET: return from subroutine
-                if (cpu.sp == 0) {
-                    std::cerr << "Stack underflow on RET\n";
-                    break;
+                // RET: Return from subroutine
+                if (stackPointer > 0) {
+                    stackPointer--;
+                    PC = stack[stackPointer];
                 }
-                cpu.sp--;
-                cpu.PC = cpu.stack[cpu.sp];
             }
             break;
-        case 0x1000:
-            // JP addr
-            cpu.PC = nnn;
+
+        case 0x1000: // JP addr
+            PC = nnn;
             break;
-        case 0x2000:
-            // CALL addr
-            if (cpu.sp >= STACK_DEPTH) {
-                std::cerr << "Stack overflow on CALL\n";
-                break;
+
+        case 0x2000: // CALL addr
+            if (stackPointer < STACK_DEPTH) {
+                stack[stackPointer] = PC;
+                stackPointer++;
+                PC = nnn;
             }
-            cpu.stack[cpu.sp++] = cpu.PC;
-            cpu.PC = nnn;
             break;
-        case 0x6000:
-            // LD Vx, byte
-            cpu.V[x] = kk;
+
+        case 0x6000: // LD Vx, byte
+            V[x] = kk;
             break;
-        case 0x7000:
-            // ADD Vx, byte
-            cpu.V[x] += kk;
+
+        case 0x7000: // ADD Vx, byte
+            V[x] += kk;
             break;
-        // Extend with more CHIP-8 instructions as needed
+
         default:
-            std::cerr << "Unknown opcode: 0x" << std::hex << opcode << std::dec << "\n";
+            // std::cerr << "Unknown opcode: 0x" << std::hex << opcode << std::endl;
             break;
     }
 }
 
-void update_timers(CPU& cpu) {
-    if (cpu.DT > 0) cpu.DT--;
-    if (cpu.ST > 0) {
-        cpu.ST--;
-        // Hook for sound: play beep if needed
-        std::cout << "BEEP!\n";
-    }
+void CPU::updateTimers() {
+    if (delayTimer > 0) delayTimer--;
+    if (soundTimer > 0) soundTimer--;
 }
+
+} // namespace core
