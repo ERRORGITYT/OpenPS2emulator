@@ -1,54 +1,109 @@
 #include "memory.h"
 #include <fstream>
 #include <iostream>
+#include <iomanip>
+#include <algorithm>
 #include <vector>
+#include <mutex>
 
 namespace core {
 
 Memory::Memory() {
-    // Clear memory (4096 bytes)
-    for (int i = 0; i < 4096; ++i) {
-        ram[i] = 0;
-    }
+    // Thread-safe initialization
+    std::lock_guard<std::mutex> lock(memMutex);
+    
+    ram.fill(0);
+
+    // --- 5-BYTE STANDARD FONT SET ---
+    const uint8_t fontSet[80] = {
+        0xF0, 0x90, 0x90, 0x90, 0xF0, 0x20, 0x60, 0x20, 0x20, 0x70,
+        0xF0, 0x10, 0xF0, 0x80, 0xF0, 0xF0, 0x10, 0xF0, 0x10, 0xF0,
+        0x90, 0x90, 0xF0, 0x10, 0x10, 0xF0, 0x80, 0xF0, 0x10, 0xF0,
+        0xF0, 0x80, 0xF0, 0x90, 0xF0, 0xF0, 0x10, 0x20, 0x40, 0x40,
+        0xF0, 0x90, 0xF0, 0x90, 0xF0, 0xF0, 0x90, 0xF0, 0x10, 0xF0,
+        0xF0, 0x90, 0xF0, 0x90, 0x90, 0xE0, 0x90, 0xE0, 0x90, 0xE0,
+        0xF0, 0x80, 0x80, 0x80, 0xF0, 0xE0, 0x90, 0x90, 0x90, 0xE0,
+        0xF0, 0x80, 0xF0, 0x80, 0xF0, 0xF0, 0x80, 0xF0, 0x80, 0x80
+    };
+
+    // --- 10-BYTE SUPER CHIP-8 FONT SET ---
+    const uint8_t largeFontSet[160] = {
+        0x3C, 0x42, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x42, 0x3C,
+        0x08, 0x18, 0x38, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x3E,
+        0x3E, 0x42, 0x42, 0x02, 0x02, 0x04, 0x08, 0x10, 0x20, 0x7E,
+        0x3E, 0x42, 0x42, 0x02, 0x3C, 0x02, 0x02, 0x42, 0x42, 0x3E,
+        0x08, 0x18, 0x28, 0x48, 0x88, 0xFE, 0x08, 0x08, 0x08, 0x08,
+        0x7E, 0x40, 0x40, 0x40, 0x7C, 0x02, 0x02, 0x02, 0x42, 0x3C,
+        0x3C, 0x42, 0x40, 0x40, 0x7C, 0x82, 0x82, 0x82, 0x42, 0x3C,
+        0xFE, 0x02, 0x02, 0x04, 0x08, 0x10, 0x20, 0x20, 0x20, 0x20,
+        0x3C, 0x42, 0x42, 0x42, 0x3C, 0x42, 0x42, 0x42, 0x42, 0x3C,
+        0x3C, 0x42, 0x82, 0x82, 0x82, 0x7E, 0x02, 0x02, 0x42, 0x3C,
+        0x18, 0x24, 0x42, 0x42, 0x42, 0x7E, 0x42, 0x42, 0x42, 0x42,
+        0x7C, 0x22, 0x22, 0x22, 0x3C, 0x22, 0x22, 0x22, 0x22, 0x7C,
+        0x3C, 0x42, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x42, 0x3C,
+        0x78, 0x24, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x24, 0x78,
+        0x7E, 0x40, 0x40, 0x40, 0x78, 0x40, 0x40, 0x40, 0x40, 0x7E,
+        0x7E, 0x40, 0x40, 0x40, 0x78, 0x40, 0x40, 0x40, 0x40, 0x40
+    };
+
+    // Load fonts into reserved memory
+    std::copy(std::begin(fontSet), std::end(fontSet), ram.begin() + 0x050);
+    std::copy(std::begin(largeFontSet), std::end(largeFontSet), ram.begin() + 0x0A0);
+
+    std::cout << "[SYSTEM] Memory Core Initialized with Dual Font-Set support." << std::endl;
 }
 
 bool Memory::loadROM(const std::string& filename) {
+    std::lock_guard<std::mutex> lock(memMutex);
+    
     std::ifstream file(filename, std::ios::binary | std::ios::ate);
-
     if (!file.is_open()) {
-        std::cerr << "Failed to open ROM: " << filename << std::endl;
+        std::cerr << "[IO ERROR] Failed to access ROM: " << filename << std::endl;
         return false;
     }
 
     std::streamsize size = file.tellg();
-    
-    // CHIP-8 Memory Map: 0x000 to 0x1FF is reserved for the interpreter.
-    // Max ROM size is 4096 - 512 = 3584 bytes.
-    if (size > (4096 - 512)) {
-        std::cerr << "Error: ROM is too large (" << size << " bytes). Max allowed is 3584 bytes." << std::endl;
+    if (size > (4096 - 0x200)) {
+        std::cerr << "[ROM ERROR] Size " << size << "b exceeds available space." << std::endl;
         return false;
     }
 
     file.seekg(0, std::ios::beg);
-    
-    // Load the ROM into RAM starting at address 0x200 (512)
-    if (file.read(reinterpret_cast<char*>(&ram[512]), size)) {
-        std::cout << "Successfully loaded " << size << " bytes into memory at 0x200." << std::endl;
+    if (file.read(reinterpret_cast<char*>(&ram[0x200]), size)) {
+        std::cout << "[LOADER] Successfully mapped ROM to 0x200. [" << size << " bytes]" << std::endl;
         return true;
     }
 
     return false;
 }
 
-uint8_t Memory::readByte(uint16_t address) {
-    return ram[address & 0xFFF]; // Masking to stay within 4096 bytes
+uint8_t Memory::readByte(uint16_t address) const {
+    std::lock_guard<std::mutex> lock(memMutex);
+    return ram[address & 0xFFF];
 }
 
-uint16_t Memory::readOpcode(uint16_t address) {
-    // CHIP-8 opcodes are 2 bytes long, stored Big-Endian
-    uint8_t highByte = ram[address & 0xFFF];
-    uint8_t lowByte = ram[(address + 1) & 0xFFF];
-    return (highByte << 8) | lowByte;
+void Memory::writeByte(uint16_t address, uint8_t value) {
+    std::lock_guard<std::mutex> lock(memMutex);
+    // Don't allow writing to font-set area (0x000-0x1FF) for safety
+    if (address >= 0x200) {
+        ram[address & 0xFFF] = value;
+    }
+}
+
+uint16_t Memory::readOpcode(uint16_t address) const {
+    std::lock_guard<std::mutex> lock(memMutex);
+    uint16_t addr = address & 0xFFF;
+    return (ram[addr] << 8) | ram[(addr + 1) & 0xFFF];
+}
+
+void Memory::dumpMemory(uint16_t start, uint16_t end) const {
+    std::lock_guard<std::mutex> lock(memMutex);
+    std::cout << "--- MEMORY DUMP [0x" << std::hex << start << " - 0x" << end << "] ---" << std::endl;
+    for (uint16_t i = start; i <= end; i++) {
+        if (i % 16 == 0) std::cout << "\n0x" << std::setw(4) << std::setfill('0') << i << ": ";
+        std::cout << std::setw(2) << static_cast<int>(ram[i]) << " ";
+    }
+    std::cout << std::dec << "\n--- END DUMP ---" << std::endl;
 }
 
 } // namespace core
