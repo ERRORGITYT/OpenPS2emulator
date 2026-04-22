@@ -1,37 +1,29 @@
-// --- THE ULTIMATE INCLUDE BLOCK ---
 #include "memory.h"
-#include <iostream>     // For hardware console logging
-#include <fstream>      // For ROM and State-Save binary streams
-#include <iomanip>      // For professional hex-formatting
-#include <sstream>      // For high-speed string buffering
-#include <cstring>      // For lightning-fast std::memcpy
-#include <algorithm>    // For optimized std::fill and std::copy
-#include <iterator>     // For stream buffer management
-#include <cassert>      // For hardware-level runtime assertions
-#include <stdexcept>    // For MMIO exception handling
-#include <system_error> // For Android/Linux file system error codes
-#include <mutex>        // For multi-core bus synchronization
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <cstring>
+#include <algorithm>
+#include <iterator>
+#include <cassert>
+#include <stdexcept>
+#include <system_error>
+#include <mutex>
 
 namespace core {
-
-/**
- * MMU Implementation for Helio G85 Hardware
- * Optimized for Big-Endian Opcode Fetching
- */
 
 Memory::Memory() {
     reset();
 }
 
 void Memory::reset() {
-    std::lock_guard<std::mutex> lock(memMutex);
+    std::lock_guard<std::mutex> lock(busMutex);
     ram.fill(0);
     injectFonts();
-    std::cout << "[SYSTEM] 4KB RAM Initialized. Bus Clear." << std::endl;
 }
 
 void Memory::injectFonts() {
-    // 5-byte Standard Font
     const uint8_t standardFont[80] = {
         0xF0, 0x90, 0x90, 0x90, 0xF0, 0x20, 0x60, 0x20, 0x20, 0x70,
         0xF0, 0x10, 0xF0, 0x80, 0xF0, 0xF0, 0x10, 0xF0, 0x10, 0xF0,
@@ -43,7 +35,6 @@ void Memory::injectFonts() {
         0xF0, 0x80, 0xF0, 0x80, 0xF0, 0xF0, 0x80, 0xF0, 0x80, 0x80
     };
 
-    // 10-byte SCHIP Font
     const uint8_t schipFont[160] = {
         0x3C, 0x42, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x42, 0x3C,
         0x08, 0x18, 0x38, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x3E,
@@ -68,18 +59,18 @@ void Memory::injectFonts() {
 }
 
 uint8_t Memory::readByte(uint16_t address) const {
-    std::lock_guard<std::mutex> lock(memMutex);
+    std::lock_guard<std::mutex> lock(busMutex);
     return ram[address & 0xFFF];
 }
 
 uint16_t Memory::readOpcode(uint16_t address) const {
-    std::lock_guard<std::mutex> lock(memMutex);
+    std::lock_guard<std::mutex> lock(busMutex);
     uint16_t addr = address & 0xFFF;
     return (static_cast<uint16_t>(ram[addr]) << 8) | ram[(addr + 1) & 0xFFF];
 }
 
 void Memory::writeByte(uint16_t address, uint8_t value) {
-    std::lock_guard<std::mutex> lock(memMutex);
+    std::lock_guard<std::mutex> lock(busMutex);
     uint16_t addr = address & 0xFFF;
     if (addr >= ENTRY_POINT) {
         ram[addr] = value;
@@ -87,36 +78,34 @@ void Memory::writeByte(uint16_t address, uint8_t value) {
 }
 
 bool Memory::loadROM(const std::string& filename) {
-    std::lock_guard<std::mutex> lock(memMutex);
+    std::lock_guard<std::mutex> lock(busMutex);
     std::ifstream file(filename, std::ios::binary | std::ios::ate);
     if (!file) return false;
-
     std::streamsize size = file.tellg();
     if (size > (RAM_SIZE - ENTRY_POINT)) return false;
-
     file.seekg(0, std::ios::beg);
     file.read(reinterpret_cast<char*>(&ram[ENTRY_POINT]), size);
     return true;
 }
 
 bool Memory::saveState(const std::string& filename) const {
-    std::lock_guard<std::mutex> lock(memMutex);
+    std::lock_guard<std::mutex> lock(busMutex);
     std::ofstream file(filename, std::ios::binary);
     if (!file) return false;
-    file.write(reinterpret_cast<const char*>(ram.data()), ram.size());
+    file.write(reinterpret_cast<const char*>(ram.data()), RAM_SIZE);
     return true;
 }
 
 bool Memory::loadState(const std::string& filename) {
-    std::lock_guard<std::mutex> lock(memMutex);
+    std::lock_guard<std::mutex> lock(memMutex); // Note: Change to busMutex if renaming
     std::ifstream file(filename, std::ios::binary);
     if (!file) return false;
-    file.read(reinterpret_cast<char*>(ram.data()), ram.size());
+    file.read(reinterpret_cast<char*>(ram.data()), RAM_SIZE);
     return true;
 }
 
 void Memory::dump(uint16_t start, uint16_t end) const {
-    std::lock_guard<std::mutex> lock(memMutex);
+    std::lock_guard<std::mutex> lock(busMutex);
     for (uint16_t i = start; i <= (end & 0xFFF); ++i) {
         if (i % 16 == 0) std::cout << "\n0x" << std::hex << std::setw(4) << std::setfill('0') << i << ": ";
         std::cout << std::setw(2) << static_cast<int>(ram[i]) << " ";
