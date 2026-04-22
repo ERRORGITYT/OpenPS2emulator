@@ -1,15 +1,10 @@
 #ifndef CPU_H
 #define CPU_H
 
-// --- ENGINE INCLUDES ---
 #include "memory.h"
-#include <random>       // For Opcode Cxkk (RND Vx, byte)
-#include <chrono>       // High-precision timing for 60Hz timers
-#include <functional>   // Function pointers and lambda handling
-#include <stack>        // Alternative stack implementation
-#include <map>          // For mapping opcodes to debug strings
-#include <thread>       // For cycle-speed management
-#include <atomic>       // Thread-safe flags for the CPU state
+#include <cstdint>
+#include <array>
+#include <random>
 
 namespace core {
 
@@ -22,25 +17,34 @@ public:
     void cycle();
     void updateTimers();
 
+    // Accessors for Main Loop & Display
+    const uint8_t* getDisplayBuffer() const { return display.data(); }
+    std::array<uint8_t, 16>& getKeys() { return keys; }
+    bool isSoundActive() const { return soundTimer > 0; }
+
 private:
     Memory& memory;
 
-    // Registers
-    uint8_t V[16];      // V0 through VF
-    uint16_t I;         // Index register
-    uint16_t PC;        // Program Counter
+    // Registers & Pointers
+    uint8_t V[16];          // General purpose registers V0-VF
+    uint16_t I;             // Index register
+    uint16_t PC;            // Program counter
     uint8_t delayTimer;
     uint8_t soundTimer;
 
     // Hardware Stack
     uint16_t stack[16];
-    uint8_t stackPointer;
+    uint8_t sp;             // Stack pointer
 
-    // Random Number Engine
+    // IO Buffers
+    std::array<uint8_t, 64 * 32> display;
+    std::array<uint8_t, 16> keys;
+
+    // RNG Engine
     std::mt19937 rng;
     std::uniform_int_distribution<uint8_t> dist;
 
-    // Internal execution methods
+    // Instruction Decoder
     void executeOpcode(uint16_t opcode);
 };
 
