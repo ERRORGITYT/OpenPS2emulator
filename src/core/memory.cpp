@@ -18,7 +18,7 @@ Memory::Memory() {
 }
 
 void Memory::reset() {
-    std::lock_guard<std::mutex> lock(busMutex); // Using busMutex
+    std::lock_guard<std::mutex> lock(busMutex); // FIXED: No more memMutex typo
     ram.fill(0);
     injectFonts();
 }
@@ -88,6 +88,7 @@ bool Memory::loadROM(const std::string& filename) {
     return true;
 }
 
+// FIXED: Returns bool, matches header declaration
 bool Memory::saveState(const std::string& filename) const {
     std::lock_guard<std::mutex> lock(busMutex);
     std::ofstream file(filename, std::ios::binary);
@@ -96,6 +97,7 @@ bool Memory::saveState(const std::string& filename) const {
     return true;
 }
 
+// FIXED: Returns bool, matches header declaration
 bool Memory::loadState(const std::string& filename) {
     std::lock_guard<std::mutex> lock(busMutex);
     std::ifstream file(filename, std::ios::binary);
