@@ -18,7 +18,7 @@ Memory::Memory() {
 }
 
 void Memory::reset() {
-    std::lock_guard<std::mutex> lock(busMutex);
+    std::lock_guard<std::mutex> lock(busMutex); // Using busMutex
     ram.fill(0);
     injectFonts();
 }
@@ -97,7 +97,7 @@ bool Memory::saveState(const std::string& filename) const {
 }
 
 bool Memory::loadState(const std::string& filename) {
-    std::lock_guard<std::mutex> lock(memMutex); // Note: Change to busMutex if renaming
+    std::lock_guard<std::mutex> lock(busMutex);
     std::ifstream file(filename, std::ios::binary);
     if (!file) return false;
     file.read(reinterpret_cast<char*>(ram.data()), RAM_SIZE);
