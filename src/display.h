@@ -3,7 +3,22 @@
 
 #include <SDL2/SDL.h>
 
-// This tells the compiler that your function from 1000695816.jpg exists
-SDL_Window* initialize_sdl();
+namespace core {
+
+class Display {
+public:
+    Display();
+    ~Display();
+
+    bool init();
+    void clear();
+    void present();
+
+private:
+    SDL_Window* window;
+    SDL_Renderer* renderer;
+};
+
+} // namespace core
 
 #endif
