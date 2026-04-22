@@ -1,40 +1,41 @@
 cmake_minimum_required(VERSION 3.10)
-project(OpenPS2emulator LANGUAGES CXX)
+project(OpenPS2emulator)
 
-# Enforce C++17 standard (or whatever is appropriate)
+# Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Find SDL2, prefer config mode for cleaner targets
-find_package(SDL2 REQUIRED CONFIG)
+# 1. Find SDL2
+find_package(SDL2 REQUIRED)
 
-# Collect all source files
-set(SOURCES
-    src/main.cpp
-    src/core/memory.cpp
-    src/core/cpu.cpp
-    src/display.cpp
+# 2. Find OpenGL (Crucial for fixing your linker errors)
+# On Android/Termux, this usually links to GLESv2
+find_package(OpenGL REQUIRED)
+
+# 3. Include directories for your project and libraries
+include_directories(
+    src 
+    src/core 
+    ${SDL2_INCLUDE_DIRS} 
+    ${OPENGL_INCLUDE_DIR}
 )
 
-# Main executable target
+# 4. List all your source files
+# Make sure these filenames match exactly what is in your folders!
+set(SOURCES
+    src/main.cpp 
+    src/display.cpp
+    src/core/memory.cpp 
+    src/core/cpu.cpp
+)
+
+# 5. Create the executable
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-# Include directories per-target
-target_include_directories(${PROJECT_NAME} PRIVATE
-    src
-    src/core
-    $<TARGET_PROPERTY:SDL2::SDL2,INTERFACE_INCLUDE_DIRECTORIES>
+# 6. Link the libraries
+# This tells the linker WHERE to find those "undefined symbols"
+target_link_libraries(${PROJECT_NAME} 
+    ${SDL2_LIBRARIES} 
+    ${OPENGL_LIBRARIES}
+    -lGLESv2  # Specific link for Android/Termux environments
 )
-
-# Prefer target style linking if available
-if (TARGET SDL2::SDL2)
-    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
-else()
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_LIBRARIES})
-endif()
-
-# Set compile features (optional, but recommended)
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
-
-# Installation (optional)
-install(TARGETS ${PROJECT_NAME} DESTINATION bin)
