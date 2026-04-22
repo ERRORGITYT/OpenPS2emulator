@@ -56,5 +56,8 @@ THIS IS NOT RELATED TO OPENPS2LOADER OR ANYTHING WHATSOEVER I'M JUST THE ONLY ON
 
 > **Note:** This project strictly avoids AI-generated code to maintain high-quality, hand-written logic. Full credits can be found in [CREDITS.md](./CREDITS.md).
 
+# Notes
+This github repo use Ai generated code or tutorial code because I'm new to coding
+
 ---
 *Created by ERRORwhately / ERRORGITYT*
